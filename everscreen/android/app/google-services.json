@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "171926505656",
+    "firebase_url": "https://healthcarehack2019.firebaseio.com",
+    "project_id": "healthcarehack2019",
+    "storage_bucket": "healthcarehack2019.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:171926505656:android:b1cf0a9ce14a5e67",
+        "android_client_info": {
+          "package_name": "com.example.everscreen"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "171926505656-0abh3pms2dte78ijprf1mf8hn8iolfvm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA89bo8tLXE25Z6gR6Z2bJ2kMAWOuCfaXs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "171926505656-0abh3pms2dte78ijprf1mf8hn8iolfvm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
