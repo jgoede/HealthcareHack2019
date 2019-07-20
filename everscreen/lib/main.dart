@@ -414,7 +414,7 @@ class _MetricsFState extends State<StatefulWidget>
           children:
             [
               Text("This is a placeholder"),
-              new Flexible()
+              new Flexible(child: TextField())
               
             ]
           )
@@ -447,7 +447,7 @@ class _MetricsMState extends State<StatefulWidget>
           children:
             [
               Text("This is a placeholder"),
-              new Flexible()
+              new Flexible(child: TextField())
               
             ]
           )
