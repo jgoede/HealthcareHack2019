@@ -22,13 +22,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Firebase Analytics Demo',
+      title: 'EverScreen Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
       navigatorObservers: <NavigatorObserver>[observer],
       home: MyHomePage(
-        title: 'Firebase Analytics Demo',
+        title: 'EverScreen Demo',
         analytics: analytics,
         observer: observer,
       ),
@@ -72,7 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
         'bool': true,
       },
     );
-    setMessage('logEvent succeeded');
+    setMessage('hello? succeeded');
   }
 
   Future<void> _testSetUserId() async {
@@ -279,7 +279,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Column(
         children: <Widget>[
           MaterialButton(
-            child: const Text('Test logEvent'),
+            child: const Text('words'),
             onPressed: _sendAnalyticsEvent,
           ),
           MaterialButton(
