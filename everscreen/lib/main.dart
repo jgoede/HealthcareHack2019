@@ -1,20 +1,21 @@
 
 
 import 'dart:async';
-
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/observer.dart';
 
-import 'tabs_page.dart';
-
+final databaseReference = FirebaseDatabase.instance.reference();
 void main() {
+  
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext ctxt) {
+    
     return new MaterialApp(
       home: new Landing(),
     );
@@ -69,12 +70,14 @@ class Landing extends StatelessWidget {
 class Login extends StatelessWidget {
   @override
   Widget build (BuildContext ctxt) {
+    
     return new Scaffold(
       appBar: new AppBar(
         title: new Text("Login"),
       ),
       body: Column(
         children:
+        
         [
           Row(
             children: [
@@ -137,7 +140,112 @@ class Login extends StatelessWidget {
     );
   }
 }
-class Signup extends StatelessWidget {
+class Manager extends StatelessWidget {
+@override
+Widget build (BuildContext ctxt) {
+ return new Scaffold(
+   appBar: new AppBar(
+     title: new Text("EverScreen Manager"),
+   ),
+   body: Column(
+       mainAxisAlignment: MainAxisAlignment.spaceAround,
+       children: [
+           Row(
+               children: [
+                   new RaisedButton(
+                       onPressed: () {
+                           Navigator.push(
+                               ctxt,
+                               new MaterialPageRoute(builder: (ctxt) => new Current()),
+                           );
+                       },
+                       child: Text('Current Schedule')
+                   )
+               ]
+           ),
+            Row(
+               children: [
+                   new RaisedButton(
+                       onPressed: () {
+                           Navigator.push(
+                               ctxt,
+                               new MaterialPageRoute(builder: (ctxt) => new Info()),
+                           );
+                       },
+                       child: Text('View Current Info')
+                   )
+               ]
+           ),
+           Row(
+               children: [
+                   new RaisedButton(
+                       onPressed: () {
+                           Navigator.push(
+                               ctxt,
+                               new MaterialPageRoute(builder: (ctxt) => new Schedule()),
+                           );
+                       },
+                       child: Text('Schedule Procedures')
+                   )
+               ]
+           ),
+           Row(
+               children: [
+                   new RaisedButton(
+                       onPressed: () {
+                           Navigator.push(
+                               ctxt,
+                               new MaterialPageRoute(builder: (ctxt) => new Faq()),
+                           );
+                       },
+                       child: Text('FAQ')
+                   )
+               ]
+           ),
+           Row(
+               children: [
+                   new RaisedButton(
+                       onPressed: () {
+                           Navigator.push(
+                               ctxt,
+                               new MaterialPageRoute(builder: (ctxt) => new About()),
+                           );
+                       },
+                       child: Text('About')
+                   )
+               ]
+           ),
+            Row(
+               children: [
+                   new RaisedButton(
+                       onPressed: () {
+                           Navigator.push(
+                               ctxt,
+                               new MaterialPageRoute(builder: (ctxt) => new Help()),
+                           );
+                       },
+                       child: Text('Help')
+                   )
+               ]
+           )
+       ]
+    )
+ );
+}
+}
+
+
+class Signup extends StatefulWidget {
+    
+  @override
+  State<StatefulWidget> createState() {
+    // TODO: implement createState
+    return _SignupState();
+  }
+
+}
+class _SignupState extends  State<StatefulWidget> {
+  String dropdownValue = 'Male';
   @override
   Widget build (BuildContext ctxt) {
     return new Scaffold(
@@ -172,21 +280,31 @@ class Signup extends StatelessWidget {
                   ]
               ),
               Row(
-                  children: [
-                      Text('Sex: '),
-                      new Flexible(child: new TextFormField(
-                          decoration: InputDecoration(
-                              labelText: ' '
-                          )
-                        )
-                      )
-                  ]
-              ),
-              Row(
-                  children: [
-                      new RaisedButton(
-                          onPressed: () {
-                              Navigator.push(
+                children: [
+                  Text('Sex: '),
+                  
+                DropdownButton<String>(
+                  value: dropdownValue,
+                  onChanged: (String newValue) {
+                    setState(() {
+                      dropdownValue = newValue;
+                    });
+                  },
+                  items: <String>['Male','Female']
+                      .map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                ),
+                    ]
+                  ),
+                  Row(
+                      children: [
+                          new RaisedButton(
+                              onPressed: () {
+                                  Navigator.push(
                                   ctxt,
                                   new MaterialPageRoute(builder: (ctxt) => new Metrics()),
                               );
@@ -200,6 +318,8 @@ class Signup extends StatelessWidget {
     );
   }
 }
+
+
 class Metrics extends StatelessWidget {
   @override
   Widget build(BuildContext ctxt) {
@@ -207,4 +327,52 @@ class Metrics extends StatelessWidget {
       home: new Landing(),
     );
   }
-}
+} 
+class Current extends StatelessWidget {
+  @override
+  Widget build(BuildContext ctxt) {
+    return new MaterialApp(
+      home: new Landing(),
+    );
+  }
+} 
+class Info extends StatelessWidget {
+  @override
+  Widget build(BuildContext ctxt) {
+    return new MaterialApp(
+      home: new Landing(),
+    );
+  }
+} 
+class Schedule extends StatelessWidget {
+  @override
+  Widget build(BuildContext ctxt) {
+    return new MaterialApp(
+      home: new Landing(),
+    );
+  }
+} 
+class Faq extends StatelessWidget {
+  @override
+  Widget build(BuildContext ctxt) {
+    return new MaterialApp(
+      home: new Landing(),
+    );
+  }
+} 
+class About extends StatelessWidget {
+  @override
+  Widget build(BuildContext ctxt) {
+    return new MaterialApp(
+      home: new Landing(),
+    );
+  }
+} 
+class Help extends StatelessWidget {
+  @override
+  Widget build(BuildContext ctxt) {
+    return new MaterialApp(
+      home: new Landing(),
+    );
+  }
+} 
