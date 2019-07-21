@@ -52,7 +52,7 @@ class Landing extends StatelessWidget {
   Widget build (BuildContext ctxt) {
     return new Scaffold(
       appBar: new AppBar(
-        title: new Text("Landing"),
+        title: new Text("EverScreen"),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
