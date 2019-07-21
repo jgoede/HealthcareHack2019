@@ -63,7 +63,7 @@ class Landing extends StatelessWidget {
             onPressed: () {
               Navigator.push(
               ctxt,
-              new MaterialPageRoute(builder: (ctxt) => new Skip()),
+              new MaterialPageRoute(builder: (ctxt) => new MetricsM()),//TODO: go to skip
             );
           },
           child: Text('Continue without logging in')
@@ -272,7 +272,7 @@ class Skip extends StatefulWidget {
 
 }
 class _SkipState extends  State<StatefulWidget> {
-  String dropdownValue = 'Male';
+  String dropdownValue = 'male';
   @override
   Widget build (BuildContext ctxt) {
     return new Scaffold(
@@ -304,7 +304,7 @@ class _SkipState extends  State<StatefulWidget> {
                       dropdownValue = newValue;
                     });
                   },
-                  items: <String>['Male','Female']
+                  items: <String>['male','female']
                       .map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
@@ -350,7 +350,7 @@ class _SignupState extends  State<StatefulWidget> {
   String password ='';
   
   String ageText='';
-  String dropdownValue = 'Male';
+  String dropdownValue = 'male';
   @override
   Widget build (BuildContext ctxt) {
     return new Scaffold(
@@ -364,10 +364,10 @@ class _SignupState extends  State<StatefulWidget> {
                   children: [
                       Text('Email: '),
                       new Flexible( 
-                        child: new TextFormField(
-                          decoration: InputDecoration(
-                              labelText: 'Enter your email'
-                          )
+                        child: TextField (
+                          onChanged: (text){
+                            email=text;
+                          },
                         )
                       )
                   ]
@@ -376,10 +376,11 @@ class _SignupState extends  State<StatefulWidget> {
                   children: [
                       Text('Age: '),
                       new Flexible(
-                        child: new TextFormField(
-                          decoration: InputDecoration(
-                              labelText: 'Enter your age in full years'
-                          )
+                        child: new TextField(
+                          onChanged: (text){
+                            ageText = text;
+                             
+                          },
                         )
                       )
                   ]
@@ -395,7 +396,7 @@ class _SignupState extends  State<StatefulWidget> {
                       dropdownValue = newValue;
                     });
                   },
-                  items: <String>['Male','Female']
+                  items: <String>['male','female']
                       .map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
@@ -431,19 +432,24 @@ void VerifyNewUser(String email, String password, String ageText,String sex,Buil
   } 
   catch (e) 
   {
+    debugPrint(e.toString());
       ReportVerifyError("Unable to parse age to a number", ctxt);
+      return;
   }
   //verify email is email and  not taken 
+  debugPrint("point b");
   RegExp exp = new RegExp(".+@.+");
   String result = exp.hasMatch(email).toString();
+  debugPrint("point c");
   if(result =='true')
   {
     try {
-          var qs = Firestore.instance.collection('users').where("email", isEqualTo: email.trim())
-      .snapshots().first;
-      debugPrint(qs.toString());
+          //TODO: figure out how to do on empty
+      
+      
+
     } catch (e) {
-      debugPrint(e.toString());
+      debugPrint("catch" + e.toString());
         //encrypt password
         password = encrypt(password);
         //input into db
@@ -474,28 +480,83 @@ class MetricsF extends StatefulWidget {
 
 class _MetricsFState extends State<StatefulWidget>
 {
-  //TODO: get questions from db
-  //Display questions
-  //verify results
-  //store to db
-  //duplicate for _MetricsMState but male
+  String bp1="";
+  String bp2="";
+  String dropDownValue1='';
+  String dropDownValue2='';
   @override
-  Widget build(BuildContext ctxt) {
-    return new MaterialApp( 
-      home: Scaffold(
-      appBar: AppBar(
-        title: Text('Metric Gathering'),
-      ),
-        body: Column(
-          children:
-            [
-              Text("This is a placeholder"),
-              new Flexible(child: TextField())
-              
+Widget build (BuildContext ctxt) {
+  return new Scaffold(
+    appBar: new AppBar(
+      title: new Text("Metrics - Female"),
+     ),
+      body: ListView(
+            padding: const EdgeInsets.all(8.0),
+            children: [
+                Container (
+                  child: Column(
+                          children: [
+                        Container (
+                            height: 50,
+                            child: Text('What is your blood pressure? (systolic/diastolic)')
+                        ),
+                        Container (
+                            height: 30,
+                            child: Row(
+                                children: [
+                                    new Flexible (
+                                        child: new TextField()
+                                    ),
+                                    new Text ('\\'), //TODO: Check escape characters
+                                    new Flexible (
+                                        child: new TextField()
+                                    )
+                                ]
+                            )
+                        )
+                    ]
+                  ),
+                  height: 90
+                ),
+                Container (
+                  child: Column(
+                    children: [
+                        Container (
+                            height: 50,
+                            child: Text('Do you have a family history of cervical cancer?')
+                        ),
+                        Container (
+                            height: 30
+                            //, dropdown
+                            //TODO: add dropdown here for yes/no
+                        )
+                    ],
+                  ),
+                  
+                  height: 90
+                  
+                ),
+                Container (
+                  child: Column(
+                    children: [
+                        Container (
+                            height: 50,
+                            child: Text('Do you take high blood pressure medication?')
+                        ),
+                        Container (
+                            height: 30,    
+                            //dropdown
+                            //TODO: add dropdown here for yes/no
+                        )
+                    ],
+                  ),
+                    height: 90
+                )
+                
             ]
-          )
+            
         )
-      );
+    );
   }
 }
 
@@ -509,26 +570,80 @@ class MetricsM extends StatefulWidget {
 
 class _MetricsMState extends State<StatefulWidget>
 {
-  //duplicate f here
 
   @override
-  Widget build(BuildContext ctxt) {
-    return new MaterialApp( 
-      home: Scaffold(
-      appBar: AppBar(
-        title: Text('Metric Gathering'),
-      ),
-        body: Column(
-          children:
-            [
-              Text("This is a placeholder"),
-              new Flexible(child: TextField())
-              
+Widget build (BuildContext ctxt) {
+  return new Scaffold(
+    appBar: new AppBar(
+      title: new Text("Metrics - Male"),
+     ),
+    body: ListView(
+            padding: const EdgeInsets.all(8.0),
+            children: [
+                Container (
+
+                    child: Column(
+                      children:  [ 
+                        Container (
+                            height: 50,
+                            child: Text('What is your blood pressure? (systolic/diastolic)')
+                        ),
+                        Container (
+                            height: 30,
+                            child: Row(
+                                children: [
+                                    new Flexible (
+                                        child: new TextField()
+                                    ),
+                                    new Text ('\\'), //TODO: Check escape characters
+                                    new Flexible (
+                                        child: new TextField()
+                                    )
+                                ]
+                            )
+                        )
+                    ],
+                    ),
+                    height: 90
+                ),
+                Container (
+                  child: Column(
+                    children: [
+                        Container (
+                            height: 50,
+                            child: Text('Do you have a family history of prostate cancer?')
+                        ),
+                        Container (
+                            height: 30
+                            //, dropdown
+                            //TODO: add dropdown here for yes/no
+                        )
+                    ],
+                  ),
+                    height: 90
+                ),
+                Container ( 
+                  child:Column(
+                    children: [
+                        Container (
+                            height: 50,
+                            child: Text('Do you have a family history of colorectal cancer?')
+                        ),
+                        Container (
+                            height: 30,    
+                            //, dropdown
+                            //TODO: add dropdown here for yes/no
+                        )
+                    ],
+                  ),
+                    height: 90
+                )
+                
             ]
-          )
+            
         )
-      );
-  }
+    );
+}
 }
 
 class Info extends StatelessWidget {
