@@ -1,5 +1,5 @@
 //TODO: change passwords of existing to match
-//run login pw through encryptionb
+//run login pw through encryption
 //change verification to not be lazy as heck
 //beautification- fonts
 //comment 
@@ -12,17 +12,30 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/observer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:crypt/crypt.dart';
 
-   
 List<String> emails = new List(); 
-List<String> passwords = new List(); 
+List<String> passwords = new List();
+String currentEmail = ""; 
+List<String> screeningNames = new List();
+List<String> minAges = new List();
+List<String> maxAges = new List();
+
+
 
 var userMap = new HashMap<String, String>();
 void main() {
     // userList = Firestore.instance.collection('users').snapshots().listen((data) =>
     //     log('data: $data'));
-    
+    Firestore.instance.collection('screenings').snapshots().listen((data) =>
+        data.documents.forEach((doc) => CollectScreenings(doc)));
   runApp(MyApp());   
+}
+
+void CollectScreenings(DocumentSnapshot doc) {
+  screeningNames.add(doc["name"]);
+  minAges.add(doc["minAge"]);
+  maxAges.add(doc["maxAge"]);
 }
 
 class MyApp extends StatelessWidget {
@@ -42,9 +55,12 @@ class Landing extends StatelessWidget {
         title: new Text("Landing"),
       ),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-           new RaisedButton(
+           Center(
+             child: 
+             new RaisedButton(
             
             onPressed: () {
               Navigator.push(
@@ -53,7 +69,8 @@ class Landing extends StatelessWidget {
               );
             },
             child: Text('Login')
-          ),
+          )
+           ),
             
           Column(
             children: [
@@ -63,7 +80,7 @@ class Landing extends StatelessWidget {
             onPressed: () {
               Navigator.push(
               ctxt,
-              new MaterialPageRoute(builder: (ctxt) => new MetricsM()),//TODO: go to skip
+              new MaterialPageRoute(builder: (ctxt) => new Skip()),
             );
           },
           child: Text('Continue without logging in')
@@ -106,16 +123,21 @@ class Login extends StatelessWidget {
         title: new Text("Login"),
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children:
         
         [
 
           Row(
             children: [
-            Text('Email'),
-            new Flexible(
+            Padding(padding: EdgeInsets.all(8), child: 
+            Text('Email')),
+            Flexible(
               child: new 
               TextField(
+                onChanged: (text) {
+                  email = text;
+                },
                 decoration: 
                   InputDecoration(
                   labelText: 'Enter Email')
@@ -125,10 +147,15 @@ class Login extends StatelessWidget {
           ),
           Row(
             children: [
-            Text('Password'),
+            Padding(padding: EdgeInsets.all(8), child: 
+            Text('Password')
+            ,),
             new Flexible(
               child: new 
               TextField(
+                onChanged: (text) {
+                  password = text;
+                },
                 decoration: 
                   InputDecoration(
                   labelText: 'Enter Password')
@@ -147,7 +174,9 @@ class Login extends StatelessWidget {
           Row(
             children:
             [
-              Text('Don\'t have an account?'),
+              Padding(padding: EdgeInsets.all(8), child: 
+              Text('Don\'t have an account?')
+              ,),
               GestureDetector(
                 onTap: (){
                   Navigator.push(
@@ -170,15 +199,37 @@ class Login extends StatelessWidget {
     );
   }
 }
+
+void _showDialog(BuildContext ctxt, String errorMsg) {
+  showDialog(
+    context: ctxt,
+    builder: (ctxt) {
+      return AlertDialog(
+        title: new Text("Error"),
+        content: new Text(errorMsg),
+        actions: <Widget>[
+          new FlatButton(
+            child: new Text("Close"),
+            onPressed: () {
+              Navigator.of(ctxt).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
 void TestLogin(String email,String password,BuildContext ctxt)
 {
-  int testVar = emails.indexOf(email);
+  int testVar = emails.indexOf(email.trim());
   if(testVar==-1)
   {
-    //TODO: create error message
+    _showDialog(ctxt, 'Email was not found. Please try again.');
   }
-  else if(passwords.elementAt(testVar)==password)
+  else if(passwords.elementAt(testVar)==encrypt(password))
   {
+    currentEmail = email;
       Navigator.push(ctxt, new MaterialPageRoute(builder: (ctxt) => new Manager()));
   }
 }
@@ -272,7 +323,7 @@ class Skip extends StatefulWidget {
 
 }
 class _SkipState extends  State<StatefulWidget> {
-  String dropdownValue = 'male';
+  String dropdownValue = 'Male';
   @override
   Widget build (BuildContext ctxt) {
     return new Scaffold(
@@ -304,7 +355,7 @@ class _SkipState extends  State<StatefulWidget> {
                       dropdownValue = newValue;
                     });
                   },
-                  items: <String>['male','female']
+                  items: <String>['Male','Female']
                       .map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
@@ -322,7 +373,7 @@ class _SkipState extends  State<StatefulWidget> {
                                  
                                   launchMetrics(dropdownValue, ctxt);
                           },
-                          child: Text('Sign Up!')
+                          child: Text('Continue to Metrics')
                       )
                   ]
               )
@@ -342,15 +393,34 @@ class Signup extends StatefulWidget {
 }
 String encrypt(String pw)
 {
-  //TODO: write encryption method
-  return pw;
+  var sh = new Crypt.sha256(pw,salt: "slajhdflkjawqer");
+  return sh.toString();
 }
 class _SignupState extends  State<StatefulWidget> { 
   String email='';
   String password ='';
   
-  String ageText='';
-  String dropdownValue = 'male';
+  String birthDateText='';
+  String sex = 'Male';
+  DateTime birthDate = DateTime.now();
+  TextEditingController birthDateController = new TextEditingController();
+
+  Future<Null> _selectDate(BuildContext context) async {
+    final DateTime picked = await showDatePicker(
+        context: context,
+        initialDate: birthDate,
+        firstDate: DateTime(2015, 8),
+        lastDate: DateTime(2101));
+    if (picked != null && picked != birthDate)
+      setState(() {
+        birthDate = picked;
+        
+        var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        String monthName = monthNames[birthDate.month - 1];
+        birthDateController.text = "${monthName} ${birthDate.day.toString()}, ${birthDate.year.toString()}";
+      });
+  }
+
   @override
   Widget build (BuildContext ctxt) {
     return new Scaffold(
@@ -362,7 +432,9 @@ class _SignupState extends  State<StatefulWidget> {
         children: [
               Row(
                   children: [
-                      Text('Email: '),
+                      Padding(padding: EdgeInsets.all(8), child: 
+                      Text('Email: ')
+                      ,),
                       new Flexible( 
                         child: TextField (
                           onChanged: (text){
@@ -374,29 +446,45 @@ class _SignupState extends  State<StatefulWidget> {
               ),
               Row(
                   children: [
-                      Text('Age: '),
-                      new Flexible(
-                        child: new TextField(
+                      Padding(padding: EdgeInsets.all(8), child: 
+                      Text('Password: ')
+                      ,),
+                      new Flexible( 
+                        child: TextField (
                           onChanged: (text){
-                            ageText = text;
-                             
+                            password=text;
                           },
                         )
                       )
                   ]
               ),
               Row(
+                  children: [
+                      Padding(padding: EdgeInsets.all(8), child: 
+                      Text('Birthdate: ')
+                      ,),
+                      new Flexible(
+                        child: new TextField(
+                          controller: birthDateController,
+                          onTap: () => _selectDate(ctxt)
+                        )
+                      )
+                  ]
+              ),
+              Row(
                 children: [
-                  Text('Natal Sex: '),
+                  Padding(padding: EdgeInsets.all(8), child: 
+                  Text('Natal Sex: ')
+                  ,),
                   
                 DropdownButton<String>(
-                  value: dropdownValue,
+                  value: sex,
                   onChanged: (String newValue) {
                     setState(() {
-                      dropdownValue = newValue;
+                      sex = newValue;
                     });
                   },
-                  items: <String>['male','female']
+                  items: <String>['Male','Female']
                       .map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
@@ -408,13 +496,15 @@ class _SignupState extends  State<StatefulWidget> {
                   ),
                   Row(
                       children: [
+                        Padding(padding: EdgeInsets.all(8), child: 
                         new RaisedButton(
                                onPressed: () {
 
-                            VerifyNewUser(email,password,ageText,dropdownValue,ctxt);                    
+                            VerifyNewUser(email,password,birthDate,sex,ctxt);                    
                                },
                           child: Text('Sign Up!')
                         )
+                        ,)
                       ]
               )
           ]
@@ -422,21 +512,9 @@ class _SignupState extends  State<StatefulWidget> {
     );
   }
 }
-void VerifyNewUser(String email, String password, String ageText,String sex,BuildContext ctxt )
+void VerifyNewUser(String email, String password, DateTime birthDate,String sex,BuildContext ctxt )
 {
-  //convert age to int
-   int num=0;
-  try 
-  {
-    num = int.parse(ageText.trim());
-  } 
-  catch (e) 
-  {
-    debugPrint(e.toString());
-      ReportVerifyError("Unable to parse age to a number", ctxt);
-      return;
-  }
-  //verify email is email and  not taken 
+  //verify email is email and not taken 
   debugPrint("point b");
   RegExp exp = new RegExp(".+@.+");
   String result = exp.hasMatch(email).toString();
@@ -444,31 +522,52 @@ void VerifyNewUser(String email, String password, String ageText,String sex,Buil
   if(result =='true')
   {
     try {
-          //TODO: figure out how to do on empty
-      
+          
+       TestEmail(birthDate, password,ctxt,sex,email.trim());
       
 
     } catch (e) {
-      debugPrint("catch" + e.toString());
-        //encrypt password
-        password = encrypt(password);
-        //input into db
-
-        //call launchmetrix 
+      _showDialog(ctxt, e.toString()+". Please try again.");
+      return;
     }
-
-
 
   }
   else
   {
-    ReportVerifyError("Not a valid email address.", ctxt);
+    _showDialog(ctxt, "Not a valid email address. Please try again");
   }
 
 }
-void ReportVerifyError(String message, BuildContext ctxt)
-{
-  //TODO: figure this out -> need to tell user message 
+void TestEmail(DateTime birthDate, String pw, BuildContext ctxt,String sex, String email){
+  // for (DocumentSnapshot doc in data.documents) 
+  // {
+  //   //debugPrint(doc.toString()+ " "+ doc["email"]);
+  // if(doc["email"].trim()==email)
+  //  {
+     
+  //     _showDialog(ctxt, "Email address already in use. Please try again");
+  //     return;
+  //  };
+  // }
+  
+
+  debugPrint("got past check");
+        //encrypt password
+        pw = encrypt(pw);
+        //TODO: input into db
+        currentEmail = email;
+Firestore.instance.collection('users').document(email).setData({
+  "email": email,
+  "password": pw,
+  "birthDate": birthDate,
+  "sex": sex
+});
+
+
+        //call launchmetrix 
+        launchMetrics(sex, ctxt);
+
+        
 }
 class MetricsF extends StatefulWidget {
     
@@ -480,10 +579,14 @@ class MetricsF extends StatefulWidget {
 
 class _MetricsFState extends State<StatefulWidget>
 {
+  int sys = 0;
+  int dia = 0;
+  bool cervicalCancer = false;
+  bool bpMedication = false;
   String bp1="";
   String bp2="";
-  String dropDownValue1='';
-  String dropDownValue2='';
+  String dropDownValue1='no';
+  String dropDownValue2='no';
   @override
 Widget build (BuildContext ctxt) {
   return new Scaffold(
@@ -505,11 +608,15 @@ Widget build (BuildContext ctxt) {
                             child: Row(
                                 children: [
                                     new Flexible (
-                                        child: new TextField()
+                                        child: new TextField(
+                                          onChanged:(text){bp1 = text;},
+                                        )
                                     ),
-                                    new Text ('\\'), //TODO: Check escape characters
+                                    new Text ('\\'), 
                                     new Flexible (
-                                        child: new TextField()
+                                        child: new TextField(
+                                          onChanged: (text){bp2 = text;},
+                                        )
                                     )
                                 ]
                             )
@@ -526,9 +633,28 @@ Widget build (BuildContext ctxt) {
                             child: Text('Do you have a family history of cervical cancer?')
                         ),
                         Container (
-                            height: 30
-                            //, dropdown
-                            //TODO: add dropdown here for yes/no
+                            height: 30,
+                            child: 
+                            DropdownButton<String>(
+                              value: dropDownValue1,
+                              onChanged: (String newValue) {
+                                setState(() {
+                                  dropDownValue1 = newValue;
+                                  if (newValue == "no") {
+                                    cervicalCancer = false;
+                                  } else {
+                                    cervicalCancer = true;
+                                  }
+                                  });
+                                },
+                                items: <String>['yes','no']
+                                  .map<DropdownMenuItem<String>>((String value) {
+                                return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                          ),  
                         )
                     ],
                   ),
@@ -545,19 +671,86 @@ Widget build (BuildContext ctxt) {
                         ),
                         Container (
                             height: 30,    
-                            //dropdown
-                            //TODO: add dropdown here for yes/no
+                            child: DropdownButton<String>(
+                              value: dropDownValue2,
+                              onChanged: (String newValue) {
+                                setState(() {
+                                  dropDownValue2 = newValue;
+                                  if (newValue == "no") {
+                                    bpMedication = false;
+                                  } else {
+                                    bpMedication = true;
+                                  }
+                                  });
+                                },
+                                items: <String>['yes','no']
+                                  .map<DropdownMenuItem<String>>((String value) {
+                                return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                          ),
                         )
                     ],
                   ),
                     height: 90
-                )
-                
+                ),
+                Row(
+                      children: [
+                        new RaisedButton(
+                               onPressed: () {
+                               try 
+                                {
+                                  sys = int.parse(bp1.trim());
+                                } 
+                                catch (e) 
+                                {
+                                  debugPrint(e.toString());
+                                    _showDialog(ctxt, "Unable to parse BP to a number");
+                                    return;
+                                
+                                }    
+                                try 
+                                {
+                                  dia = int.parse(bp2.trim());
+                                } 
+                                catch (e) 
+                                {
+                                  debugPrint(e.toString());
+                                    _showDialog(ctxt, "Unable to parse BP to a number");
+                                    return;
+                                }
+                                sendFemaleMetrics(sys, dia, cervicalCancer, bpMedication);
+                                Navigator.push(ctxt, new MaterialPageRoute(builder: (ctxt) => new Info()));              
+                               },
+                              child: Text('Submit')
+                        )
+                      ]
+                 )
             ]
             
         )
     );
   }
+}
+
+void sendMaleMetrics(int sys, int dia, bool colorectalCancer, bool prostateCancer) {
+  Firestore.instance.collection('users').document(currentEmail).setData({
+    "systolic": sys,
+    "diastolic": dia,
+    "prostateCancerFamilyHistory": prostateCancer,
+    "colorectalCancerFamilyHistory": colorectalCancer
+  }, merge: true);
+} 
+
+void sendFemaleMetrics(int sys, int dia, bool cervicalCancer, bool bpMedication) {
+  Firestore.instance.collection('users').document(currentEmail).setData({
+    "systolic": sys,
+    "diastolic": dia,
+    "cervicalCancerFamilyHistory": cervicalCancer,
+    "takesBPMedication": bpMedication
+  }, merge: true);
 }
 
 class MetricsM extends StatefulWidget {
@@ -569,8 +762,16 @@ class MetricsM extends StatefulWidget {
 }
 
 class _MetricsMState extends State<StatefulWidget>
-{
-
+{ 
+//TODO: code submit (same for metricsFstate)
+  int sys = 0;
+  int dia = 0;
+  String bp1="";
+  String bp2="";
+  String dropDownValue1='no';
+  String dropDownValue2='no';
+  bool prostateCancer = false;
+  bool colorectalCancer = false;
   @override
 Widget build (BuildContext ctxt) {
   return new Scaffold(
@@ -581,7 +782,6 @@ Widget build (BuildContext ctxt) {
             padding: const EdgeInsets.all(8.0),
             children: [
                 Container (
-
                     child: Column(
                       children:  [ 
                         Container (
@@ -593,11 +793,11 @@ Widget build (BuildContext ctxt) {
                             child: Row(
                                 children: [
                                     new Flexible (
-                                        child: new TextField()
+                                        child: new TextField(onChanged:(text){bp1 = text;},)
                                     ),
-                                    new Text ('\\'), //TODO: Check escape characters
+                                    new Text ('\\'),
                                     new Flexible (
-                                        child: new TextField()
+                                        child: new TextField(onChanged:(text){bp2 = text;},)
                                     )
                                 ]
                             )
@@ -614,9 +814,28 @@ Widget build (BuildContext ctxt) {
                             child: Text('Do you have a family history of prostate cancer?')
                         ),
                         Container (
-                            height: 30
-                            //, dropdown
-                            //TODO: add dropdown here for yes/no
+                            height: 30,
+                            child: DropdownButton<String>(
+                              value: dropDownValue1,
+                              onChanged: (String newValue) {
+                                setState(() {
+                                  dropDownValue1 = newValue;
+                                  });
+                                  if (newValue == "yes") {
+                                    prostateCancer = true;
+                                  } else {
+                                    prostateCancer = false;
+                                  }
+                                },
+                                items: <String>['yes','no']
+                                  .map<DropdownMenuItem<String>>((String value) {
+                                return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                          ),
+
                         )
                     ],
                   ),
@@ -630,15 +849,64 @@ Widget build (BuildContext ctxt) {
                             child: Text('Do you have a family history of colorectal cancer?')
                         ),
                         Container (
-                            height: 30,    
-                            //, dropdown
-                            //TODO: add dropdown here for yes/no
+                            height: 30,
+                            child: DropdownButton<String>(
+                              value: dropDownValue2,
+                              onChanged: (String newValue) {
+                                setState(() {
+                                  dropDownValue2 = newValue;
+                                  });
+                                  if (newValue == "yes") {
+                                    colorectalCancer = true;
+                                  } else {
+                                    colorectalCancer = false;
+                                  }
+                                },
+                                items: <String>['yes','no']
+                                  .map<DropdownMenuItem<String>>((String value) {
+                                return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                          ),
                         )
                     ],
                   ),
                     height: 90
-                )
-                
+                ),
+                Row(
+                      children: [
+                        new RaisedButton(
+                               onPressed: () {
+                                try 
+                                {
+                                  sys = int.parse(bp1.trim());
+                                } 
+                                catch (e) 
+                                {
+                                  debugPrint(e.toString());
+                                    _showDialog(ctxt, "Unable to parse BP to a number");
+                                    return;
+                                
+                                }    
+                                try 
+                                {
+                                  dia = int.parse(bp2.trim());
+                                } 
+                                catch (e) 
+                                {
+                                  debugPrint(e.toString());
+                                    _showDialog(ctxt, "Unable to parse BP to a number");
+                                    return;
+                                }
+                                sendMaleMetrics(sys, dia, colorectalCancer, prostateCancer);
+                                Navigator.push(ctxt, new MaterialPageRoute(builder: (ctxt) => new Info()));                     
+                               },
+                              child: Text('Submit')
+                        )
+                      ]
+                 )                
             ]
             
         )
@@ -648,8 +916,8 @@ Widget build (BuildContext ctxt) {
 
 class Info extends StatelessWidget {
   // Test Subject Data
-  var name = 'John Doe';
-  var race = 'Asian';
+  String name = 'John Doe';
+  String race = 'Asian';
   int PSA = 5;
   int age = 22;
   int systolic = 120;
@@ -666,18 +934,21 @@ class Info extends StatelessWidget {
   // date lastColonoscopyScreening = July 20, 2016 at 12:00:00 AM UTC-5;
   // date lastInfluenzaScreening = July 20, 2017 at 12:00:00 AM UTC-5;
   // date lastProstateScreening = July 20, 1997 at 12:00:00 AM UTC-5;
+  
   @override
   Widget build (BuildContext ctxt) {
     return new Scaffold(
       appBar: new AppBar(
         title: new Text("Your Information"),
       ),
-      body: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+      body: ListView(
+          
         children: [
               Row(
                   children: [
-                      Text('Name: '),
+                      Padding(padding: EdgeInsets.all(8), child: 
+                      Text('Name: ')
+                      ,),
                       new Flexible(
                         child: new Text('$name')
                       )
@@ -685,7 +956,9 @@ class Info extends StatelessWidget {
               ),
               Row(
                   children: [
-                      Text('Age: '),
+                      Padding(padding: EdgeInsets.all(8), child: 
+                        Text('Age: ')
+                      ,),
                       new Flexible(
                         child: new Text('$age')
                       )
@@ -693,7 +966,9 @@ class Info extends StatelessWidget {
               ),
               Row(
                   children: [
-                      Text('Race: '),
+                      Padding(padding: EdgeInsets.all(8), child: 
+                      Text('Race: ')
+                      ,),
                       new Flexible(
                         child: new Text('$race')
                       )
@@ -701,7 +976,9 @@ class Info extends StatelessWidget {
               ),
               Row(
                   children: [
-                      Text('Birthdate '),
+                      Padding(padding: EdgeInsets.all(8), child: 
+                      Text('Birthdate ')
+                      ,),
                       new Flexible(
                         child: new Text('birthdate')
                       )
@@ -709,7 +986,9 @@ class Info extends StatelessWidget {
               ),
               Row(
                   children: [
-                      Text('Systolic / Diastolic: '),
+                      Padding(padding: EdgeInsets.all(8), child: 
+                      Text('Systolic / Diastolic: ')
+                      ,),
                       new Flexible(
                         child: new Text('$systolic' + ' / ' + '$diastolic')
                       )
@@ -717,7 +996,9 @@ class Info extends StatelessWidget {
               ),
               Row(
                   children: [
-                      Text('High Blood Pressure: '),
+                      Padding(padding: EdgeInsets.all(8), child: 
+                      Text('High Blood Pressure: ')
+                      ),
                       new Flexible(
                         child: new Text('$highBloodPressure')
                       )
@@ -725,7 +1006,10 @@ class Info extends StatelessWidget {
               ),
               Row(
                   children: [
-                      Text('High Blood Pressure Risk: '),
+                      Padding(padding: EdgeInsets.all(8), child: 
+                      
+                      Text('High Blood Pressure Risk: ')
+                      ,),
                       new Flexible(
                         child: new Text('$highRiskBP')
                       )
@@ -733,7 +1017,9 @@ class Info extends StatelessWidget {
               ),
               Row(
                   children: [
-                      Text('High Cholesterol Risk: '),
+                      Padding(padding: EdgeInsets.all(8), child: 
+                      Text('High Cholesterol Risk: ')
+                      ,),
                       new Flexible(
                         child: new Text('$highRiskCholestrol')
                       )
@@ -741,13 +1027,36 @@ class Info extends StatelessWidget {
               ),
               Row(
                   children: [
-                      Text('Heart Disease Risk: '),
+                      Padding(padding: EdgeInsets.all(8), child: 
+                      
+                      Text('Heart Disease Risk: ')),
                       new Flexible(
                         child: new Text('$heartDiseaseRisk')
                       )
                   ]
-              )
+              ),
               //TODO Get and display additional recommend screenings from db
+              Row(children: <Widget>[
+                
+                Padding(padding: EdgeInsets.all(8), child:
+                Container(width: 100, child: Text('Colonoscopy Screening Advised'),)
+                ,),
+                new Flexible(child: Padding(padding: EdgeInsets.all(8), child: 
+                Text('Given your family history of colorectal cancer, you may need to be screened despite being younger than 50 years old. Time frames for screening, as well as risks and benefits, vary for different screening methods. Talk to your healthcare provider about which test is best for you. ')
+                ,),)
+
+              ],
+              ),
+              Row(children: <Widget>[
+                Padding(padding: EdgeInsets.all(8), child: 
+                Container(width: 100, child: Text('Prostate Screening Advised'),)
+                ,),
+                new Flexible(child: Padding(padding: EdgeInsets.all(8), child: 
+                Text('Given that you are between 40-45 years old, you may need to take an early prostate-specific antige1 (PSA) test to detect future risk of prostate cancer and enlarged prostate symptoms. Discuss your risk factors for prostate cancer with your healthcare provider.')
+                ,),)
+
+              ],
+              ),
           ]
       )
     );
@@ -756,7 +1065,7 @@ class Info extends StatelessWidget {
 
 void launchMetrics(String sex, BuildContext ctxt)
 {
-  if(sex == 'male')
+  if(sex == 'Male')
   {
     Navigator.push(ctxt, new MaterialPageRoute(builder: (ctxt) => new MetricsM()));
   }
