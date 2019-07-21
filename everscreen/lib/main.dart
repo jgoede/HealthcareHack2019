@@ -1,15 +1,24 @@
 
 
 import 'dart:async';
-
+import 'dart:collection';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/observer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
+   
+List<String> emails = new List(); 
+List<String> passwords = new List(); 
+
+var userMap = new HashMap<String, String>();
 void main() {
-  
-  runApp(MyApp());
+    // userList = Firestore.instance.collection('users').snapshots().listen((data) =>
+    //     log('data: $data'));
+    
+  runApp(MyApp());   
 }
 
 class MyApp extends StatelessWidget {
@@ -31,7 +40,7 @@ class Landing extends StatelessWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          new RaisedButton(
+           new RaisedButton(
             
             onPressed: () {
               Navigator.push(
@@ -45,7 +54,7 @@ class Landing extends StatelessWidget {
           Column(
             children: [
 
-            new RaisedButton(
+             new RaisedButton(
             
             onPressed: () {
               Navigator.push(
@@ -67,9 +76,44 @@ class Landing extends StatelessWidget {
     );
   }
 }
+//TODO: change references of username to email
+void Verify(String email,String password, BuildContext ctxt)
+{
+          //   StreamBuilder<QuerySnapshot> (
+          //  stream: Firestore.instance.collection('users')
+          //  .snapshots(),
+          //  builder: (BuildContext context,
+          //  AsyncSnapshot<QuerySnapshot> snapshot) {
+          //    if (snapshot.hasError)
+          //     return new Text ('Error: ${snapshot.error}');
+          //    switch (snapshot.connectionState) { 
+          //      case ConnectionState.waiting:
+          //        return new Text('Loading...');
+          //      default:
+
+ 
+    
+    
+}
+void CollectUsers(DocumentSnapshot doc)
+{
+  String email = doc["email"];
+  String pw = doc["password"];
+  // debugPrint(email+" "+ pw); debug code
+  if(!emails.contains(email))
+  {
+    emails.add(email);
+    passwords.add(pw);
+  }
+}
 class Login extends StatelessWidget {
+  String email= "";
+  String password="";
   @override
   Widget build (BuildContext ctxt) {
+
+      Firestore.instance.collection('users')
+        .snapshots().listen((data) =>data.documents.forEach((doc) => CollectUsers(doc)));
     
     return new Scaffold(
       appBar: new AppBar(
@@ -79,23 +123,9 @@ class Login extends StatelessWidget {
         children:
         
         [
-          StreamBuilder<QuerySnapshot> (
-           stream: Firestore.instance.collection('users')
-           .snapshots(),
-           builder: (BuildContext context,
-           AsyncSnapshot<QuerySnapshot> snapshot) {
-             if (snapshot.hasError)
-              return new Text ('Error: ${snapshot.error}');
-             switch (snapshot.connectionState) { 
-               case ConnectionState.waiting:
-                 return new Text('Loading...');
-               default:
-                 return new Text('Loading...');
+
+                 //Verify(username,password,ctxt);
                  // TODO: Specific D 
-             }
-           }
-         )
-          ,
           Row(
             children: [
             Text('Username'),
@@ -125,10 +155,13 @@ class Login extends StatelessWidget {
           RaisedButton(
             child: Text('Login'),
             onPressed: (){
-              Navigator.push(
-              ctxt,
-              new MaterialPageRoute(builder: (ctxt) => new Manager()),
-              );
+              // Navigator.push(
+              // ctxt,
+              // new MaterialPageRoute(builder: (ctxt) => new Manager()),
+              //TODO: write verify for this
+
+                TestLogin(email,password,ctxt);
+              
             }
           ),
           Row(
@@ -160,6 +193,18 @@ class Login extends StatelessWidget {
         
       )
     );
+  }
+}
+void TestLogin(String email,String password,BuildContext ctxt)
+{
+  int testVar = emails.indexOf(email);
+  if(testVar==-1)
+  {
+    //TODO: create error message
+  }
+  else if(passwords.elementAt(testVar)==password)
+  {
+      Navigator.push(ctxt, new MaterialPageRoute(builder: (ctxt) => new Manager()));
   }
 }
 class Manager extends StatelessWidget {
