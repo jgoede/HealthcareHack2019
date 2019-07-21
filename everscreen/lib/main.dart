@@ -1,12 +1,12 @@
 
 
 import 'dart:async';
-import 'package:firebase_database/firebase_database.dart';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/observer.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-final databaseReference = FirebaseDatabase.instance.reference();
 void main() {
   
   runApp(MyApp());
@@ -79,6 +79,23 @@ class Login extends StatelessWidget {
         children:
         
         [
+          StreamBuilder<QuerySnapshot> (
+           stream: Firestore.instance.collection('users')
+           .snapshots(),
+           builder: (BuildContext context,
+           AsyncSnapshot<QuerySnapshot> snapshot) {
+             if (snapshot.hasError)
+              return new Text ('Error: ${snapshot.error}');
+             switch (snapshot.connectionState) { 
+               case ConnectionState.waiting:
+                 return new Text('Loading...');
+               default:
+                 return new Text('Loading...');
+                 // TODO: Specific D 
+             }
+           }
+         )
+          ,
           Row(
             children: [
             Text('Username'),
